@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#070309">
+  <title>С Днём отца! 🎸 Открытка для лучшего папы</title>
+  <meta property="og:title" content="С Днём отца! 🎸">
+  <meta property="og:description" content="Интерактивная открытка для самого лучшего папы на свете! Нажми, чтобы сыграть ✨">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #060209;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Montserrat", "Helvetica Neue", sans-serif;
+      color: #ffffff;
+      touch-action: none;
+    }
+
+    #stageCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Screen shake container */
+    #viewportWrapper {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      transition: transform 0.05s ease-out;
+    }
+
+    /* Floating UI Container */
+    .ui-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: env(safe-area-inset-top, 20px) 16px env(safe-area-inset-bottom, 24px);
+      pointer-events: none;
+    }
+
+    /* Header Badge */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+      pointer-events: auto;
+      animation: fadeInDown 1.2s ease-out;
+    }
+
+    .badge-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 18px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 200, 100, 0.22);
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      color: #ffca65;
+      box-shadow: 0 4px 20px rgba(255, 165, 0, 0.2);
+    }
+
+    .sound-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+    .sound-btn:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    /* Central Start Overlay */
+    .start-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at center, rgba(16, 7, 24, 0.85) 0%, rgba(4, 1, 7, 0.95) 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+      cursor: pointer;
+      pointer-events: auto;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .start-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .guitar-icon-large {
+      font-size: 72px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 25px rgba(255, 170, 0, 0.7));
+      animation: guitarFloat 2.6s ease-in-out infinite alternate;
+    }
+
+    .start-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #fff2cc 0%, #ffb703 50%, #fb8500 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      text-shadow: 0 0 35px rgba(251, 133, 0, 0.45);
+    }
+
+    .start-subtitle {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.75);
+      max-width: 320px;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    .start-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 36px;
+      background: linear-gradient(135deg, #fb8500 0%, #ff5400 50%, #d00000 100%);
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 50px;
+      box-shadow: 0 10px 35px rgba(251, 133, 0, 0.55), 0 0 20px rgba(255, 84, 0, 0.4);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      animation: pulseBtn 2s infinite alternate;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 14px 45px rgba(251, 133, 0, 0.7);
+    }
+
+    .start-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Bottom Greeting Card */
+    .message-container {
+      width: 100%;
+      max-width: 520px;
+      margin-bottom: 8px;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .message-container.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card-box {
+      background: rgba(22, 10, 32, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 190, 80, 0.28);
+      border-radius: 24px;
+      padding: 18px 22px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 150, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .card-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.8), transparent);
+    }
+
+    .card-title {
+      font-size: 19px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff 0%, #ffe3a0 60%, #ffa500 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .card-text {
+      font-size: 14px;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.88);
+      min-height: 44px;
+      transition: opacity 0.3s ease;
+    }
+
+    .string-hint {
+      font-size: 11px;
+      color: #ffc46b;
+      margin-top: 6px;
+      opacity: 0.85;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    /* Action Buttons Row */
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 200, 100, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .action-btn:active {
+      transform: scale(0.95);
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(135deg, rgba(251, 133, 0, 0.85) 0%, rgba(224, 40, 20, 0.85) 100%);
+      border-color: rgba(255, 215, 0, 0.5);
+      box-shadow: 0 6px 20px rgba(251, 133, 0, 0.35);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-60px);
+      background: rgba(28, 15, 38, 0.92);
+      border: 1px solid rgba(255, 200, 80, 0.4);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      pointer-events: none;
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+      opacity: 0;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Keyframe Animations */
+    @keyframes pulseBtn {
+      0% {
+        box-shadow: 0 6px 25px rgba(251, 133, 0, 0.45);
+      }
+      100% {
+        box-shadow: 0 12px 45px rgba(255, 60, 0, 0.75), 0 0 25px rgba(255, 200, 0, 0.5);
+      }
+    }
+
+    @keyframes guitarFloat {
+      0% { transform: translateY(0) rotate(-4deg); }
+      100% { transform: translateY(-12px) rotate(4deg); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="viewportWrapper">
+    <canvas id="stageCanvas"></canvas>
+  </div>
+
+  <!-- Intro Start Overlay -->
+  <div class="start-overlay" id="startOverlay" onclick="startExperience()">
+    <div class="guitar-icon-large">🎸</div>
+    <div class="start-title">С ДНЁМ ОТЦА!</div>
+    <div class="start-subtitle">Особенный подарок для самого лучшего, сильного и любимого папы! Нажми, чтобы зазвучала музыка ✨</div>
+    <button class="start-btn" id="startBtn">
+      <span>Врубить рок! 🤘</span>
+    </button>
+  </div>
+
+  <!-- Floating UI Overlay -->
+  <div class="ui-layer">
+    <div class="header-bar">
+      <div class="badge-pill">
+        <span>⭐ ЛУЧШИЙ ПАПА НА СВЕТЕ ⭐</span>
+      </div>
+      <button class="sound-btn" id="muteToggle" title="Звук" onclick="toggleMute(event)">🔊</button>
+    </div>
+
+    <div class="message-container" id="messageContainer">
+      <div class="card-box" id="cardBox">
+        <div class="card-title" id="cardTitle">Папа, ты наш главный рок-н-ролл! 🎸</div>
+        <div class="card-text" id="cardText">Спасибо за твою силу, мудрость, заботу и теплоту. С праздником, самый крутой папа! ❤️</div>
+        <div class="string-hint">
+          <span>🎶</span> Коснись струн на гитаре, чтобы сыграть свою мелодию!
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="action-btn primary" onclick="strumBigChord()">
+          <span>🎸 Дрынь ещё!</span>
+        </button>
+        <button class="action-btn" onclick="playRockSolo()">
+          <span>⚡ Рок-соло</span>
+        </button>
+        <button class="action-btn" onclick="nextWish()">
+          <span>💬 Тёплые слова</span>
+        </button>
+        <button class="action-btn" onclick="shareCard()">
+          <span>🔗 Поделиться</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Ссылка скопирована! Отправь папе 🎸</div>
+
+  <script>
+    /* ========================================================
+       1. WEB AUDIO GUITAR PHYSICAL MODELING SYNTHESIZER
+       Karplus-Strong Plucked String Synthesis
+       ======================================================== */
+    class GuitarAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.isMuted = false;
+        this.stringBuffers = {};
+        this.bodyFilter = null;
+        this.masterGain = null;
+        this.initialized = false;
+      }
+
+      init() {
+        if (this.initialized) {
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+          return;
+        }
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+
+        // Master gain
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
+
+        // Acoustic body resonant filters (simulating acoustic wood cavity)
+        const lowBodyFilter = this.ctx.createBiquadFilter();
+        lowBodyFilter.type = 'peaking';
+        lowBodyFilter.frequency.value = 115; // Helmholtz resonance
+        lowBodyFilter.Q.value = 2.4;
+        lowBodyFilter.gain.value = 4.5;
+
+        const woodBodyFilter = this.ctx.createBiquadFilter();
+        woodBodyFilter.type = 'peaking';
+        woodBodyFilter.frequency.value = 230; // Spruce top plate resonance
+        woodBodyFilter.Q.value = 2.8;
+        woodBodyFilter.gain.value = 3.5;
+
+        const warmthFilter = this.ctx.createBiquadFilter();
+        warmthFilter.type = 'lowpass';
+        warmthFilter.frequency.value = 5200; // Warm acoustic roll-off
+
+        lowBodyFilter.connect(woodBodyFilter);
+        woodBodyFilter.connect(warmthFilter);
+        warmthFilter.connect(this.masterGain);
+        this.masterGain.connect(this.ctx.destination);
+        this.inputNode = lowBodyFilter;
+
+        // Precompute standard guitar string buffers
+        const notes = {
+          'E2': 82.41,
+          'G2': 98.00,
+          'A2': 110.00,
+          'B2': 123.47,
+          'C3': 130.81,
+          'D3': 146.83,
+          'E3': 164.81,
+          'F#3': 185.00,
+          'G3': 196.00,
+          'G#3': 207.65,
+          'A3': 220.00,
+          'B3': 246.94,
+          'C4': 261.63,
+          'C#4': 277.18,
+          'D4': 293.66,
+          'E4': 329.63,
+          'F#4': 369.99,
+          'G4': 392.00,
+          'A4': 440.00
+        };
+
+        for (const [name, freq] of Object.entries(notes)) {
+          this.stringBuffers[name] = this.synthesizePluck(freq, 3.2);
+        }
+
+        this.initialized = true;
+      }
+
+      // Karplus-Strong string synthesis
+      synthesizePluck(freq, duration = 3.0) {
+        const sampleRate = this.ctx.sampleRate;
+        const totalSamples = Math.floor(sampleRate * duration);
+        const buffer = this.ctx.createBuffer(1, totalSamples, sampleRate);
+        const data = buffer.getChannelData(0);
+        const period = Math.round(sampleRate / freq);
+
+        // Initial burst: white noise with slight high-pass
+        for (let i = 0; i < period; i++) {
+          data[i] = (Math.random() * 2 - 1) * 0.95;
+        }
+
+        // Karplus-Strong filter loop: averaging adjacent delay samples with frequency-dependent decay
+        const damping = Math.min(0.9968, 0.988 + 1.15 / freq);
+        for (let i = period; i < totalSamples; i++) {
+          const prev = (i - period > 0) ? data[i - period - 1] : data[i - 1];
+          data[i] = 0.5 * (data[i - period] + prev) * damping;
+        }
+
+        return buffer;
+      }
+
+      playPluck(noteName, volume = 0.8, pitchOffset = 0) {
+        if (this.isMuted || !this.initialized) return;
+        try {
+          if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+
+          const buffer = this.stringBuffers[noteName] || this.stringBuffers['E3'];
+          const src = this.ctx.createBufferSource();
+          src.buffer = buffer;
+          if (pitchOffset !== 0) {
+            src.playbackRate.value = Math.pow(2, pitchOffset / 12);
+          }
+
+          const pluckGain = this.ctx.createGain();
+          pluckGain.gain.setValueAtTime(volume, this.ctx.currentTime);
+          
+          src.connect(pluckGain);
+          pluckGain.connect(this.inputNode);
+          src.start();
+        } catch (e) {
+          console.warn('Audio playback notice:', e);
+        }
+      }
+
+      // Strum an acoustic chord with staggered string plucking
+      strumChord(chordNotes, duration = 0.12, volume = 0.9) {
+        if (this.isMuted || !this.initialized) return;
+        const step = duration / chordNotes.length;
+        chordNotes.forEach((note, idx) => {
+          setTimeout(() => {
+            const vol = volume * (0.8 + Math.random() * 0.3);
+            this.playPluck(note, vol);
+          }, idx * step * 1000);
+        });
+      }
+
+      // Sparkle crystal chime for touch events
+      playChime(freq = 880) {
+        if (this.isMuted || !this.initialized) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(freq * 1.5, this.ctx.currentTime + 0.25);
+
+          gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+
+          osc.connect(gain);
+          gain.connect(this.masterGain);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.32);
+        } catch (e) {}
+      }
+
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        if (this.masterGain) {
+          this.masterGain.gain.value = this.isMuted ? 0 : 0.75;
+        }
+        return this.isMuted;
+      }
+    }
+
+    const sound = new GuitarAudioEngine();
+
+    /* ========================================================
+       2. CANVAS SETUP & RESPONSIVE METRICS
+       ======================================================== */
+    const canvas = document.getElementById('stageCanvas');
+    const ctx = canvas.getContext('2d');
+    const wrapper = document.getElementById('viewportWrapper');
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let isPortrait = false;
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      isPortrait = height > width;
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+
+      // Re-generate text targets for note particles
+      if (experienceStarted) {
+        regenerateTextTargets();
+      }
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+
+    /* ========================================================
+       3. GUITAR RENDERING & STRING PHYSICS
+       ======================================================== */
+    const GUITAR_STRINGS = [
+      { name: 'E2', label: 'E (6)', color: '#d99b38', width: 3.2, offset: -16 },
+      { name: 'A2', label: 'A (5)', color: '#d49733', width: 2.7, offset: -9.5 },
+      { name: 'D3', label: 'D (4)', color: '#ce922e', width: 2.2, offset: -3.2 },
+      { name: 'G3', label: 'G (3)', color: '#eed086', width: 1.8, offset: 3.2 },
+      { name: 'B3', label: 'B (2)', color: '#eaeaea', width: 1.4, offset: 9.5 },
+      { name: 'E4', label: 'e (1)', color: '#f8f8f8', width: 1.1, offset: 16 }
+    ];
+
+    class GuitarObject {
+      constructor() {
+        this.x = 0;
+        this.y = 0;
+        this.targetX = 0;
+        this.targetY = 0;
+        this.angle = 0;
+        this.targetAngle = 0;
+        this.scale = 1;
+        this.targetScale = 1;
+        this.alpha = 0;
+        
+        // Recoil / wobble on strum
+        this.recoilAmp = 0;
+        this.recoilPhase = 0;
+
+        // String vibrations
+        this.strings = GUITAR_STRINGS.map(s => ({
+          ...s,
+          vibAmp: 0,
+          vibPhase: 0,
+          vibFreq: 25 + Math.random() * 15
+        }));
+
+        // Pick animation
+        this.pick = {
+          active: false,
+          progress: 0,
+          x: 0,
+          y: 0
+        };
+      }
+
+      setPlacement() {
+        if (isPortrait) {
+          // In portrait (smartphones): Guitar sits dynamically in the lower half
+          this.targetX = width * 0.5;
+          this.targetY = height * 0.64;
+          this.targetAngle = -0.22; // ~ -13 degrees
+          this.targetScale = Math.min(width / 390, 1.15) * 0.95;
+        } else {
+          // In landscape: Guitar sits on bottom-left, tilted
+          this.targetX = width * 0.32;
+          this.targetY = height * 0.62;
+          this.targetAngle = -0.32; // ~ -18 degrees
+          this.targetScale = Math.min(height / 600, 1.3) * 0.88;
+        }
+      }
+
+      triggerEntrance() {
+        this.setPlacement();
+        // Start offscreen / scaled down
+        this.x = this.targetX;
+        this.y = height + 350;
+        this.scale = 0.2;
+        this.angle = 0.5;
+        this.alpha = 1;
+      }
+
+      strum(chordType = 'EMajor') {
+        const chordPresets = {
+          'EMajor': ['E2', 'B2', 'E3', 'G#3', 'B3', 'E4'],
+          'GMajor': ['G2', 'B2', 'D3', 'G3', 'D4', 'G4'],
+          'DMajor': ['D3', 'A3', 'D4', 'F#4'],
+          'AMajor': ['A2', 'E3', 'A3', 'C#4', 'E4'],
+          'CMajor': ['C3', 'E3', 'G3', 'C4', 'E4'],
+          'RockPower': ['E2', 'B2', 'E3', 'B3', 'E4', 'G#3']
+        };
+
+        const notes = chordPresets[chordType] || chordPresets['EMajor'];
+        sound.strumChord(notes, 0.12, 0.9);
+
+        // Vibrate all strings with slight stagger
+        this.strings.forEach((str, idx) => {
+          setTimeout(() => {
+            str.vibAmp = 7.5;
+            str.vibPhase = 0;
+            // Spawn sparks at string contact
+            createStringSparks(this.getStringScreenPos(idx));
+          }, idx * 18);
+        });
+
+        // Trigger recoil impulse
+        this.recoilAmp = 14;
+        this.recoilPhase = 0;
+
+        // Screen shake
+        triggerScreenShake(8);
+
+        // Animate pick sweeping across strings
+        this.pick.active = true;
+        this.pick.progress = 0;
+      }
+
+      pluckString(idx) {
+        if (idx < 0 || idx >= this.strings.length) return;
+        const str = this.strings[idx];
+        str.vibAmp = 8.5;
+        str.vibPhase = 0;
+        sound.playPluck(str.name, 0.85);
+        createStringSparks(this.getStringScreenPos(idx), 14);
+        triggerScreenShake(3);
+      }
+
+      getStringScreenPos(stringIdx) {
+        const str = this.strings[stringIdx];
+        const rad = this.angle;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+
+        // Local soundhole strum location is near (str.offset, -15)
+        const lx = str.offset * this.scale;
+        const ly = -15 * this.scale;
+
+        return {
+          x: this.x + (lx * cos - ly * sin),
+          y: this.y + (lx * sin + ly * cos)
+        };
+      }
+
+      getSoundholeScreenPos() {
+        const rad = this.angle;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const ly = -20 * this.scale;
+        return {
+          x: this.x - ly * sin,
+          y: this.y + ly * cos
+        };
+      }
+
+      update(dt) {
+        // Smooth spring ease toward target transform
+        this.x += (this.targetX - this.x) * 0.1;
+        this.y += (this.targetY - this.y) * 0.1;
+        this.angle += (this.targetAngle - this.angle) * 0.1;
+        this.scale += (this.targetScale - this.scale) * 0.1;
+
+        // Recoil decay
+        if (this.recoilAmp > 0.05) {
+          this.recoilPhase += 0.4;
+          this.recoilAmp *= 0.91;
+        } else {
+          this.recoilAmp = 0;
+        }
+
+        // Strings vibration decay
+        this.strings.forEach(s => {
+          if (s.vibAmp > 0.05) {
+            s.vibPhase += s.vibFreq * dt;
+            s.vibAmp *= 0.94;
+          } else {
+            s.vibAmp = 0;
+          }
+        });
+
+        // Pick animation sweep
+        if (this.pick.active) {
+          this.pick.progress += dt * 7.5;
+          if (this.pick.progress >= 1) {
+            this.pick.active = false;
+          }
+        }
+      }
+
+      draw(ctx) {
+        if (this.alpha <= 0) return;
+
+        ctx.save();
+        
+        // Apply recoil wobble
+        const wobbleX = Math.sin(this.recoilPhase) * this.recoilAmp * 0.6;
+        const wobbleY = Math.cos(this.recoilPhase) * this.recoilAmp * 0.8;
+        const wobbleAngle = Math.sin(this.recoilPhase) * (this.recoilAmp * 0.003);
+
+        ctx.translate(this.x + wobbleX, this.y + wobbleY);
+        ctx.rotate(this.angle + wobbleAngle);
+        ctx.scale(this.scale, this.scale);
+
+        // Draw shadow under guitar
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+        ctx.shadowBlur = 35;
+        ctx.shadowOffsetX = 10;
+        ctx.shadowOffsetY = 25;
+        this.drawBodyOutline(ctx, 'rgba(0, 0, 0, 0.4)');
+        ctx.restore();
+
+        // 1. Guitar Body (Sunburst Acoustic / Electric hybrid)
+        this.drawGuitarBody(ctx);
+
+        // 2. Soundhole & Rosette
+        this.drawSoundhole(ctx);
+
+        // 3. Pickguard
+        this.drawPickguard(ctx);
+
+        // 4. Bridge & Saddle
+        this.drawBridge(ctx);
+
+        // 5. Neck & Fretboard
+        this.drawNeck(ctx);
+
+        // 6. Headstock & Tuning Pegs
+        this.drawHeadstock(ctx);
+
+        // 7. Vibrating Strings
+        this.drawStrings(ctx);
+
+        // 8. Animated Pick (Plectrum)
+        if (this.pick.active) {
+          this.drawPick(ctx);
+        }
+
+        ctx.restore();
+      }
+
+      drawBodyOutline(ctx, fillStyle) {
+        ctx.beginPath();
+        // Guitar symmetry path
+        ctx.moveTo(0, -100);
+        // Left side curves
+        ctx.bezierCurveTo(-65, -100, -85, -75, -85, -35); // Upper bout
+        ctx.bezierCurveTo(-85, 0, -60, 20, -60, 48);      // Waist
+        ctx.bezierCurveTo(-60, 85, -115, 105, -115, 150); // Lower bout
+        ctx.bezierCurveTo(-115, 205, -65, 225, 0, 225);   // Bottom curve
+        // Right side curves
+        ctx.bezierCurveTo(65, 225, 115, 205, 115, 150);
+        ctx.bezierCurveTo(115, 105, 60, 85, 60, 48);
+        ctx.bezierCurveTo(60, 20, 85, 0, 85, -35);
+        ctx.bezierCurveTo(85, -75, 65, -100, 0, -100);
+        ctx.closePath();
+        ctx.fillStyle = fillStyle;
+        ctx.fill();
+      }
+
+      drawGuitarBody(ctx) {
+        ctx.save();
+        // Warm Sunburst Radial Gradient
+        const sunburst = ctx.createRadialGradient(0, 70, 15, 0, 70, 175);
+        sunburst.addColorStop(0.0, '#ffca3a'); // Honey golden center
+        sunburst.addColorStop(0.35, '#ff9214'); // Rich amber
+        sunburst.addColorStop(0.68, '#c1290a'); // Burnt cherry mahogany
+        sunburst.addColorStop(0.92, '#3f0c05'); // Dark vintage edge
+        sunburst.addColorStop(1.0, '#130402');  // Deep black rim
+
+        this.drawBodyOutline(ctx, sunburst);
+
+        // Ivory Body Binding (Outer edge line)
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#f8ecd5';
+        ctx.stroke();
+
+        // Inner pinstripe binding
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+        ctx.stroke();
+
+        // Subtle stage light gloss / reflection on the upper shoulder
+        const gloss = ctx.createLinearGradient(-70, -80, 50, 40);
+        gloss.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+        gloss.addColorStop(0.4, 'rgba(255, 255, 255, 0.05)');
+        gloss.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = gloss;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawSoundhole(ctx) {
+        const cx = 0;
+        const cy = -20;
+        const r = 38;
+
+        ctx.save();
+        // Concentric Rosette Rings
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#f4e8c1';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + 9, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#d4af37'; // Gold inlay ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + 5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Deep interior of soundhole
+        const holeGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, r);
+        holeGrad.addColorStop(0, '#020101');
+        holeGrad.addColorStop(0.85, '#0a0302');
+        holeGrad.addColorStop(1, '#1b0804');
+        ctx.fillStyle = holeGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Shadow inside soundhole rim
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      drawPickguard(ctx) {
+        ctx.save();
+        // Elegant teardrop pickguard on the right side of soundhole
+        ctx.beginPath();
+        ctx.moveTo(12, 10);
+        ctx.bezierCurveTo(36, 12, 60, -5, 55, -45);
+        ctx.bezierCurveTo(50, -70, 30, -50, 25, -20);
+        ctx.bezierCurveTo(22, 0, 14, 5, 12, 10);
+        ctx.closePath();
+
+        const pgGrad = ctx.createLinearGradient(15, -60, 55, 10);
+        pgGrad.addColorStop(0, '#5a1807');
+        pgGrad.addColorStop(0.5, '#2e0a02');
+        pgGrad.addColorStop(1, '#0c0201');
+        ctx.fillStyle = pgGrad;
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#d89c44';
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      drawBridge(ctx) {
+        const bx = -46;
+        const by = 98;
+        const bw = 92;
+        const bh = 22;
+
+        ctx.save();
+        // Dark rosewood belly bridge
+        ctx.fillStyle = '#220e06';
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 5);
+        ctx.fill();
+
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#431d10';
+        ctx.stroke();
+
+        // White bone saddle
+        ctx.fillStyle = '#f8f4e6';
+        ctx.fillRect(-22, by + 5, 44, 3);
+
+        // 6 Ivory Bridge Pins
+        for (let i = 0; i < 6; i++) {
+          const px = -16 + i * 6.4;
+          const py = by + 14;
+          ctx.beginPath();
+          ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+          ctx.fillStyle = '#f5eedb';
+          ctx.fill();
+          // Black dot in pin
+          ctx.beginPath();
+          ctx.arc(px, py, 0.9, 0, Math.PI * 2);
+          ctx.fillStyle = '#111111';
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      drawNeck(ctx) {
+        ctx.save();
+        const topY = -275;
+        const botY = -100;
+        const topW = 26; // Width at nut
+        const botW = 34; // Width at body joint
+
+        // Fretboard wood
+        ctx.fillStyle = '#1b120c';
+        ctx.beginPath();
+        ctx.moveTo(-botW / 2, botY);
+        ctx.lineTo(-topW / 2, topY);
+        ctx.lineTo(topW / 2, topY);
+        ctx.lineTo(botW / 2, botY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Side bindings
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#eedcb3';
+        ctx.stroke();
+
+        // Frets & Pearl Markers
+        const fretCount = 14;
+        const fretsWithMarkers = [3, 5, 7, 9, 12];
+        for (let f = 1; f <= fretCount; f++) {
+          const t = f / fretCount;
+          // Exponential fret spacing
+          const fy = botY + (topY - botY) * Math.pow(t, 0.88);
+          const fw = botW + (topW - botW) * Math.pow(t, 0.88);
+
+          // Silver fret wire
+          ctx.strokeStyle = 'rgba(220, 220, 225, 0.85)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(-fw / 2, fy);
+          ctx.lineTo(fw / 2, fy);
+          ctx.stroke();
+
+          // Pearloid dot markers
+          if (fretsWithMarkers.includes(f)) {
+            const prevT = (f - 1) / fretCount;
+            const prevFY = botY + (topY - botY) * Math.pow(prevT, 0.88);
+            const dotY = (fy + prevFY) / 2;
+
+            ctx.fillStyle = '#fdfbf7';
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 4;
+            if (f === 12) {
+              // Double dot at 12th fret
+              ctx.beginPath();
+              ctx.arc(-5.5, dotY, 2, 0, Math.PI * 2);
+              ctx.arc(5.5, dotY, 2, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              ctx.beginPath();
+              ctx.arc(0, dotY, 2.2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+          }
+        }
+
+        // Bone Nut
+        ctx.fillStyle = '#f5eedb';
+        ctx.fillRect(-topW / 2 - 1, topY - 5, topW + 2, 5);
+
+        ctx.restore();
+      }
+
+      drawHeadstock(ctx) {
+        ctx.save();
+        const startY = -280;
+        const endY = -365;
+
+        // Mahogany Headstock Silhouette
+        ctx.fillStyle = '#1f0d07';
+        ctx.beginPath();
+        ctx.moveTo(-13, startY);
+        ctx.lineTo(-19, startY - 25);
+        ctx.lineTo(-21, endY + 20);
+        ctx.bezierCurveTo(-22, endY, -5, endY - 6, 0, endY);
+        ctx.bezierCurveTo(5, endY - 6, 22, endY, 21, endY + 20);
+        ctx.lineTo(19, startY - 25);
+        ctx.lineTo(13, startY);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = '#ecc985';
+        ctx.stroke();
+
+        // Gold Inlay Brand / Badge
+        ctx.fillStyle = '#ffcf56';
+        ctx.font = 'bold 9px "Montserrat", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('★ DAD ★', 0, endY + 38);
+
+        // Tuning Pegs (3 on left, 3 on right)
+        for (let i = 0; i < 3; i++) {
+          const pegY = startY - 30 - i * 22;
+          // Left peg
+          this.drawTuningPeg(ctx, -20, pegY, -1);
+          // Right peg
+          this.drawTuningPeg(ctx, 20, pegY, 1);
+        }
+
+        ctx.restore();
+      }
+
+      drawTuningPeg(ctx, x, y, dir) {
+        // Post
+        ctx.fillStyle = '#b0b5be';
+        ctx.fillRect(dir < 0 ? x - 7 : x, y - 2, 7, 4);
+        // Chrome Knob
+        ctx.fillStyle = '#e8ecf1';
+        ctx.strokeStyle = '#8d94a0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(dir < 0 ? x - 10 : x + 10, y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      drawStrings(ctx) {
+        const topY = -280;
+        const botY = 103;
+
+        this.strings.forEach((str, idx) => {
+          const topX = -10 + idx * 4.0;
+          const botX = str.offset;
+
+          ctx.save();
+          ctx.strokeStyle = str.color;
+          ctx.lineWidth = str.width;
+          ctx.lineCap = 'round';
+
+          if (str.vibAmp > 0.1) {
+            // Vibrating wave
+            ctx.shadowColor = str.color;
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.moveTo(topX, topY);
+
+            // Sine wave deformation
+            const steps = 16;
+            for (let i = 1; i <= steps; i++) {
+              const t = i / steps;
+              const curX = topX + (botX - topX) * t;
+              const curY = topY + (botY - topY) * t;
+              // Standing wave harmonic: maximum amplitude in the center
+              const wave = Math.sin(Math.PI * t) * Math.sin(str.vibPhase) * str.vibAmp;
+              ctx.lineTo(curX + wave, curY);
+            }
+            ctx.stroke();
+          } else {
+            // Rest state
+            ctx.beginPath();
+            ctx.moveTo(topX, topY);
+            ctx.lineTo(botX, botY);
+            ctx.stroke();
+          }
+          ctx.restore();
+        });
+      }
+
+      drawPick(ctx) {
+        const p = this.pick.progress; // 0 to 1
+        // Pick sweeps across strings from left (string 0) to right (string 5)
+        const startX = -24;
+        const endX = 24;
+        const curX = startX + (endX - startX) * p;
+        const curY = -12 + (p - 0.5) * 8;
+
+        ctx.save();
+        ctx.translate(curX, curY);
+        ctx.rotate(0.3 + p * 0.4);
+
+        // Glowing Golden Guitar Pick
+        ctx.shadowColor = '#ffb703';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#ffd166';
+        ctx.beginPath();
+        ctx.moveTo(0, 10);
+        ctx.lineTo(-8, -6);
+        ctx.bezierCurveTo(-4, -10, 4, -10, 8, -6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
+
+    const guitar = new GuitarObject();
+
+    /* ========================================================
+       4. MUSICAL NOTE PARTICLES & TEXT MORPHING
+       ======================================================== */
+    const NOTE_SYMBOLS = ['♪', '♫', '♬', '♩', '𝄞', '𝄢', '♭', '♯', '★', '❤️', '✨'];
+    const NOTE_PALETTE = [
+      '#ffd166', '#ffb703', '#fb8500', '#ff5400',
+      '#ff006e', '#8338ec', '#3a86ff', '#06d6a0', '#ffffff'
+    ];
+
+    let noteParticles = [];
+    let textTargetPoints = [];
+    let morphState = 'idle'; // 'idle', 'burst', 'morphing', 'assembled'
+    let morphTimer = 0;
+
+    class NoteParticle {
+      constructor(originX, originY, target) {
+        this.reset(originX, originY, target);
+      }
+
+      reset(originX, originY, target) {
+        this.x = originX;
+        this.y = originY;
+        this.target = target;
+        this.baseTargetX = target ? target.x : originX;
+        this.baseTargetY = target ? target.y : originY;
+
+        // Explosive radial burst
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.5;
+        const speed = Math.random() * 14 + 5;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed - (Math.random() * 3);
+
+        this.symbol = NOTE_SYMBOLS[Math.floor(Math.random() * NOTE_SYMBOLS.length)];
+        this.color = NOTE_PALETTE[Math.floor(Math.random() * NOTE_PALETTE.length)];
+        this.size = Math.random() * 14 + 14;
+        this.targetSize = Math.random() * 7 + 13;
+
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 0.25;
+
+        this.alpha = 1;
+        this.phase = Math.random() * Math.PI * 2;
+        this.arrived = false;
+        this.wobbleAmp = 0;
+      }
+
+      update(dt, progress) {
+        this.rotation += this.rotSpeed;
+
+        if (progress < 0.25) {
+          // Phase 1: High velocity free explosion & deceleration
+          this.x += this.vx;
+          this.y += this.vy;
+          this.vx *= 0.93;
+          this.vy *= 0.93;
+          this.vy += 0.08; // subtle gravity
+        } else {
+          // Phase 2: Magnetic pull toward letter target coordinates
+          const t = Math.min(1, (progress - 0.25) / 0.75);
+          // Ease in attraction
+          const springK = 0.045 + t * 0.08;
+          const damping = 0.82;
+
+          // Target position with subtle harmonic idle wave once arrived
+          let tx = this.baseTargetX;
+          let ty = this.baseTargetY;
+
+          if (this.arrived) {
+            tx += Math.cos(guitarTime * 2.5 + this.phase) * 1.8;
+            ty += Math.sin(guitarTime * 2.5 + this.phase) * 2.4;
+          }
+
+          const dx = tx - this.x;
+          const dy = ty - this.y;
+          const dist = Math.hypot(dx, dy);
+
+          this.vx += dx * springK;
+          this.vy += dy * springK;
+          this.vx *= damping;
+          this.vy *= damping;
+
+          this.x += this.vx;
+          this.y += this.vy;
+
+          if (dist < 4) {
+            this.arrived = true;
+            this.rotSpeed *= 0.9;
+          }
+
+          // Size transitions to clean legible target size
+          this.size += (this.targetSize - this.size) * 0.08;
+        }
+
+        // Ripple wobble if disturbed
+        if (this.wobbleAmp > 0.05) {
+          this.x += (Math.random() - 0.5) * this.wobbleAmp;
+          this.y += (Math.random() - 0.5) * this.wobbleAmp;
+          this.wobbleAmp *= 0.9;
+        }
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.globalAlpha = this.alpha;
+
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = this.arrived ? 12 : 18;
+
+        ctx.font = `${Math.round(this.size)}px -apple-system, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.symbol, 0, 0);
+
+        ctx.restore();
+      }
+    }
+
+    /* Generate pixel points from text "С ДНЁМ" and "ОТЦА!" */
+    function regenerateTextTargets() {
+      const offCanvas = document.createElement('canvas');
+      const octx = offCanvas.getContext('2d');
+      offCanvas.width = width;
+      offCanvas.height = height;
+
+      // Font size responsive to screen
+      const fontBase = Math.round(Math.min(width * 0.16, height * 0.13, 88));
+      octx.fillStyle = '#ffffff';
+      octx.textAlign = 'center';
+      octx.textBaseline = 'middle';
+      octx.font = `900 ${fontBase}px "Montserrat", -apple-system, "Segoe UI", sans-serif`;
+
+      // Vertical position of text
+      const textCY = isPortrait ? height * 0.22 : height * 0.25;
+      const lineGap = fontBase * 1.05;
+
+      octx.fillText("С ДНЁМ", width / 2, textCY - lineGap * 0.55);
+      octx.fillText("ОТЦА! ❤️", width / 2, textCY + lineGap * 0.55);
+
+      const imgData = octx.getImageData(0, 0, width, height).data;
+      textTargetPoints = [];
+
+      // Sampling step: dynamically calculated to get ~380-480 crisp points
+      const step = Math.max(5, Math.floor(fontBase / 10));
+      const scanTop = Math.max(0, Math.floor(textCY - lineGap * 1.6));
+      const scanBot = Math.min(height, Math.floor(textCY + lineGap * 1.6));
+
+      for (let y = scanTop; y < scanBot; y += step) {
+        for (let x = Math.floor(width * 0.05); x < Math.floor(width * 0.95); x += step) {
+          const idx = (y * width + x) * 4 + 3;
+          if (imgData[idx] > 140) {
+            textTargetPoints.push({ x: x, y: y });
+          }
+        }
+      }
+
+      // If particles already exist, re-bind targets smoothly
+      if (noteParticles.length > 0) {
+        noteParticles.forEach((p, idx) => {
+          const tgt = textTargetPoints[idx % textTargetPoints.length];
+          p.baseTargetX = tgt.x;
+          p.baseTargetY = tgt.y;
+        });
+      }
+    }
+
+    function burstNotesFromGuitar() {
+      regenerateTextTargets();
+      const origin = guitar.getSoundholeScreenPos();
+      const count = Math.max(textTargetPoints.length, 360);
+
+      noteParticles = [];
+      for (let i = 0; i < count; i++) {
+        const target = textTargetPoints[i % textTargetPoints.length];
+        noteParticles.push(new NoteParticle(origin.x, origin.y, target));
+      }
+
+      morphState = 'burst';
+      morphTimer = 0;
+    }
+
+    /* ========================================================
+       5. SPARKLES & STAGE LIGHT EFFECTS
+       ======================================================== */
+    const stageSparkles = [];
+
+    class SparkleParticle {
+      constructor(x, y, isStar = false) {
+        this.x = x;
+        this.y = y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 7 + 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed - 1.5;
+        this.life = 1;
+        this.decay = Math.random() * 0.03 + 0.02;
+        this.size = isStar ? Math.random() * 12 + 10 : Math.random() * 3.5 + 2;
+        this.isStar = isStar;
+        this.color = NOTE_PALETTE[Math.floor(Math.random() * NOTE_PALETTE.length)];
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.09;
+        this.vx *= 0.96;
+        this.life -= this.decay;
+      }
+
+      draw(ctx) {
+        if (this.life <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.translate(this.x, this.y);
+
+        if (this.isStar) {
+          ctx.font = `${this.size}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = this.color;
+          ctx.fillText('✨', 0, 0);
+        } else {
+          ctx.fillStyle = this.color;
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    function createStringSparks(pos, count = 18) {
+      for (let i = 0; i < count; i++) {
+        stageSparkles.push(new SparkleParticle(pos.x, pos.y, Math.random() > 0.65));
+      }
+    }
+
+    // Ambient floating dust particles in stage spotlights
+    const ambientDust = [];
+    for (let i = 0; i < 45; i++) {
+      ambientDust.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        radius: Math.random() * 2 + 0.5,
+        alpha: Math.random() * 0.6 + 0.2,
+        speedX: (Math.random() - 0.5) * 0.4,
+        speedY: -Math.random() * 0.5 - 0.1
+      });
+    }
+
+    function updateAmbientDust() {
+      ambientDust.forEach(p => {
+        p.x += p.speedX;
+        p.y += p.speedY;
+        if (p.y < -10) {
+          p.y = height + 10;
+          p.x = Math.random() * width;
+        }
+        if (p.x < -10) p.x = width + 10;
+        if (p.x > width + 10) p.x = -10;
+      });
+    }
+
+    function drawStageBackground(ctx, time) {
+      // Deep gradient
+      const bgGrad = ctx.createRadialGradient(width / 2, height * 0.45, 40, width / 2, height * 0.5, Math.max(width, height) * 0.85);
+      bgGrad.addColorStop(0, '#1c0a24');
+      bgGrad.addColorStop(0.5, '#0c0412');
+      bgGrad.addColorStop(1, '#040106');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Rotating Volumetric Stage Spotlights
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+
+      // Left Amber Spotlight
+      const spot1X = width * 0.2 + Math.sin(time * 0.8) * 80;
+      const spot1Y = height * 0.55 + Math.cos(time * 0.6) * 60;
+      const spot1 = ctx.createRadialGradient(spot1X, spot1Y, 10, spot1X, spot1Y, width * 0.45);
+      spot1.addColorStop(0, 'rgba(255, 170, 0, 0.28)');
+      spot1.addColorStop(0.5, 'rgba(255, 100, 0, 0.1)');
+      spot1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = spot1;
+      ctx.fillRect(0, 0, width, height);
+
+      // Right Violet/Magenta Spotlight
+      const spot2X = width * 0.8 - Math.sin(time * 0.7) * 70;
+      const spot2Y = height * 0.4 - Math.cos(time * 0.9) * 50;
+      const spot2 = ctx.createRadialGradient(spot2X, spot2Y, 10, spot2X, spot2Y, width * 0.42);
+      spot2.addColorStop(0, 'rgba(200, 40, 255, 0.22)');
+      spot2.addColorStop(0.5, 'rgba(120, 20, 200, 0.08)');
+      spot2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = spot2;
+      ctx.fillRect(0, 0, width, height);
+
+      // Ambient Dust
+      ctx.fillStyle = '#ffcf77';
+      ambientDust.forEach(d => {
+        ctx.globalAlpha = d.alpha * (0.6 + 0.4 * Math.sin(time * 2 + d.x));
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    /* Screen shake feedback */
+    let shakeIntensity = 0;
+    function triggerScreenShake(amount = 10) {
+      shakeIntensity = amount;
+      if (navigator.vibrate) {
+        navigator.vibrate(amount > 6 ? 40 : 20);
+      }
+    }
+
+    function updateScreenShake() {
+      if (shakeIntensity > 0.1) {
+        const sx = (Math.random() - 0.5) * shakeIntensity;
+        const sy = (Math.random() - 0.5) * shakeIntensity;
+        wrapper.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+        shakeIntensity *= 0.88;
+      } else {
+        wrapper.style.transform = 'translate3d(0, 0, 0)';
+        shakeIntensity = 0;
+      }
+    }
+
+    /* ========================================================
+       6. INTERACTION & TOUCH HANDLING
+       ======================================================== */
+    let experienceStarted = false;
+
+    function startExperience() {
+      if (experienceStarted) return;
+      experienceStarted = true;
+
+      // Initialize audio
+      sound.init();
+
+      // Hide intro overlay
+      document.getElementById('startOverlay').classList.add('hidden');
+
+      // Trigger guitar entrance
+      guitar.triggerEntrance();
+
+      // After guitar enters (~650ms), deliver the big rock strum!
+      setTimeout(() => {
+        guitar.strum('EMajor');
+        burstNotesFromGuitar();
+
+        // Reveal greeting card
+        setTimeout(() => {
+          document.getElementById('messageContainer').classList.add('visible');
+        }, 1800);
+      }, 700);
+    }
+
+    function strumBigChord() {
+      const chords = ['EMajor', 'GMajor', 'DMajor', 'AMajor', 'CMajor', 'RockPower'];
+      const pick = chords[Math.floor(Math.random() * chords.length)];
+      guitar.strum(pick);
+      burstNotesFromGuitar();
+      sound.playChime(1046.5); // High crystal chime
+    }
+
+    // Play an energetic rock solo progression
+    let isPlayingSolo = false;
+    function playRockSolo() {
+      if (isPlayingSolo) return;
+      isPlayingSolo = true;
+      showToast('🎸 Играем рок-соло для Папы! ⚡');
+
+      const riff = [
+        { string: 0, time: 0 },
+        { string: 2, time: 240 },
+        { string: 3, time: 480 },
+        { string: 0, time: 760 },
+        { string: 2, time: 1000 },
+        { string: 4, time: 1220 },
+        { string: 3, time: 1460 },
+        { string: 0, time: 1800 },
+        { string: 2, time: 2040 },
+        { string: 3, time: 2280 },
+        { string: 2, time: 2560 },
+        { string: 0, time: 2840 }
+      ];
+
+      riff.forEach(note => {
+        setTimeout(() => {
+          guitar.pluckString(note.string);
+          // Scatter letters slightly with rhythm
+          if (noteParticles.length > 0) {
+            noteParticles.forEach(p => p.wobbleAmp = 5);
+          }
+        }, note.time);
+      });
+
+      // Finish with a grand triumphant chord
+      setTimeout(() => {
+        strumBigChord();
+        isPlayingSolo = false;
+      }, 3200);
+    }
+
+    // Interactive strings plucking with mouse or touch drag
+    function handlePointerHit(clientX, clientY) {
+      if (!experienceStarted) return;
+
+      // 1. Check if user tapped directly on a guitar string
+      let hitString = false;
+      guitar.strings.forEach((str, idx) => {
+        const pos = guitar.getStringScreenPos(idx);
+        const dist = Math.hypot(clientX - pos.x, clientY - pos.y);
+        if (dist < 32 * guitar.scale) {
+          guitar.pluckString(idx);
+          hitString = true;
+        }
+      });
+
+      // 2. Check if user tapped near letter particles
+      if (!hitString && noteParticles.length > 0) {
+        let hitLetter = false;
+        noteParticles.forEach(p => {
+          const d = Math.hypot(clientX - p.x, clientY - p.y);
+          if (d < 45) {
+            p.vx += (p.x - clientX) * 0.3;
+            p.vy += (p.y - clientY) * 0.3;
+            p.wobbleAmp = 12;
+            hitLetter = true;
+          }
+        });
+        if (hitLetter) {
+          sound.playChime(587.33 + Math.random() * 400);
+          createStringSparks({ x: clientX, y: clientY }, 12);
+        }
+      }
+
+      // 3. Fallback: ambient touch bursts
+      if (!hitString) {
+        createStringSparks({ x: clientX, y: clientY }, 8);
+      }
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      // Ignore clicks on UI buttons
+      if (e.target.closest('.button-group') || e.target.closest('.sound-btn') || e.target.closest('.start-overlay')) {
+        return;
+      }
+      handlePointerHit(e.clientX, e.clientY);
+    });
+
+    let lastPluckTime = 0;
+    window.addEventListener('pointermove', (e) => {
+      if (!experienceStarted || e.buttons === 0) return;
+      const now = performance.now();
+      if (now - lastPluckTime > 75) {
+        lastPluckTime = now;
+        handlePointerHit(e.clientX, e.clientY);
+      }
+    });
+
+    /* ========================================================
+       7. GREETING WISHES & SHARING
+       ======================================================== */
+    const WISHES = [
+      {
+        title: "Папа, ты наш главный рок-н-ролл! 🎸",
+        text: "Спасибо за твою силу, мудрость, заботу и теплоту. С праздником, самый крутой папа! ❤️"
+      },
+      {
+        title: "Любимому папе — нашему герою! 🏆",
+        text: "Ты учишь нас никогда не сдаваться, верить в себя и идти только вперед. Мы тобой безмерно гордимся!"
+      },
+      {
+        title: "Лучший друг и наставник! 🌟",
+        text: "Спасибо за добрые советы, весёлые истории и надежное плечо в любую минуту. Крепкого здоровья и счастья!"
+      },
+      {
+        title: "Папа номер один во Вселенной! 🚀",
+        text: "Пусть в твоей душе всегда играет любимая песня, а каждый новый день приносит яркие победы и радость!"
+      },
+      {
+        title: "Для мира ты папа, а для нас — целый мир! ❤️",
+        text: "Спасибо, что ты есть. Пусть сбываются все твои мечты, а мы всегда будем рядом!"
+      }
+    ];
+
+    let currentWishIndex = 0;
+    function nextWish() {
+      currentWishIndex = (currentWishIndex + 1) % WISHES.length;
+      const cardTitle = document.getElementById('cardTitle');
+      const cardText = document.getElementById('cardText');
+
+      cardTitle.style.opacity = '0';
+      cardText.style.opacity = '0';
+
+      sound.playChime(880);
+
+      setTimeout(() => {
+        cardTitle.textContent = WISHES[currentWishIndex].title;
+        cardText.textContent = WISHES[currentWishIndex].text;
+        cardTitle.style.opacity = '1';
+        cardText.style.opacity = '1';
+      }, 250);
+
+      // Send a wave through note particles
+      if (noteParticles.length > 0) {
+        noteParticles.forEach(p => p.wobbleAmp = 8);
+      }
+    }
+
+    function toggleMute(e) {
+      if (e) e.stopPropagation();
+      const isMuted = sound.toggleMute();
+      const btn = document.getElementById('muteToggle');
+      btn.textContent = isMuted ? '🔇' : '🔊';
+      showToast(isMuted ? 'Звук выключен' : 'Звук включен 🎶');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2600);
+    }
+
+    function shareCard() {
+      sound.playChime(987.77);
+      if (navigator.share) {
+        navigator.share({
+          title: 'С Днём отца! 🎸',
+          text: 'Смотри, какую классную открытку я приготовил для тебя!',
+          url: window.location.href
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          showToast('Ссылка скопирована! Отправь папе 🎸');
+        }).catch(() => {
+          showToast('С праздником лучшего папу! ❤️');
+        });
+      }
+    }
+
+    /* ========================================================
+       8. MAIN ANIMATION LOOP
+       ======================================================== */
+    let guitarTime = 0;
+    let lastTimestamp = performance.now();
+
+    function renderLoop(now) {
+      const dt = Math.min((now - lastTimestamp) / 1000, 0.1);
+      lastTimestamp = now;
+      guitarTime += dt;
+
+      // 1. Draw Concert Atmosphere & Spotlights
+      drawStageBackground(ctx, guitarTime);
+
+      // 2. Update and draw Guitar
+      guitar.update(dt);
+      guitar.draw(ctx);
+
+      // 3. Update and draw Musical Note Particles
+      if (noteParticles.length > 0) {
+        morphTimer += dt;
+        // Total morph duration is ~2.8s
+        const progress = Math.min(1, morphTimer / 2.8);
+
+        for (let i = 0; i < noteParticles.length; i++) {
+          noteParticles[i].update(dt, progress);
+          noteParticles[i].draw(ctx);
+        }
+      }
+
+      // 4. Update and draw Sparkles
+      for (let i = stageSparkles.length - 1; i >= 0; i--) {
+        const s = stageSparkles[i];
+        s.update();
+        s.draw(ctx);
+        if (s.life <= 0) {
+          stageSparkles.splice(i, 1);
+        }
+      }
+
+      // 5. Ambient dust updates
+      updateAmbientDust();
+
+      // 6. Camera shake update
+      updateScreenShake();
+
+      requestAnimationFrame(renderLoop);
+    }
+
+    // Initialize layout & launch loop
+    resize();
+    requestAnimationFrame(renderLoop);
+  </script>
+</body>
+</html>
